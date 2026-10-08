@@ -137,7 +137,7 @@ CREATE TABLE TicketSale (
     ticketSaleID  INT IDENTITY(1,1) PRIMARY KEY,
     screeningID   INT NOT NULL,
     saleDateTime  DATETIME NOT NULL,
-    quantity      INT NOT NULL CHECK (quantity > 0),
+    quantity      INT NOT NULL CHECK (quantity > 0 AND quantity <= ),
     totalPrice    DECIMAL(10, 2) NOT NULL
     FOREIGN KEY (screeningID) REFERENCES Screening(screeningID)
 );
