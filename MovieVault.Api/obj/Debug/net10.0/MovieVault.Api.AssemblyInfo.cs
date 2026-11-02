@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("MovieVault.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+050e9583536405658bae46d910538bb77ff4d3fd")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+9621f59d8e92d916004ecc0f624746d063f15db5")]
 [assembly: System.Reflection.AssemblyProductAttribute("MovieVault.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("MovieVault.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

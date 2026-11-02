@@ -153,5 +153,6 @@ public class MovieVaultContext : DbContext
             t.HasCheckConstraint("CK_TicketSale_Quantity", "[Quantity] > 0");
             t.HasCheckConstraint("CK_TicketSale_TotalPrice", "[TotalPrice] >= 0");
         });
+        modelBuilder.Seed();
     }
 }
