@@ -31,7 +31,6 @@ public record ActorMoviePerformanceDto(
     int ActorId,
     string ActorName,
     int TotalTicketsSold,
-    decimal TotalRevenue,
     List<ActorMovieDto> Movies);
 
 public record ActorMovieDto(
@@ -39,5 +38,4 @@ public record ActorMovieDto(
     string MovieTitle,
     string CharacterName,
     string RoleType,
-    int TicketsSold,
-    decimal Revenue);
+    int TicketsSold);

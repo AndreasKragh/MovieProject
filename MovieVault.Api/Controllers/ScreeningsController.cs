@@ -9,7 +9,7 @@ namespace MovieVault.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class ScreeningsController : ControllerBase
+public partial class ScreeningsController : ControllerBase
 {
     private readonly MovieVaultContext _context;
 

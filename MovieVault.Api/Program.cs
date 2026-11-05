@@ -1,8 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 using MovieVault.Api.Data; 
 using Scalar.AspNetCore;
+using Serilog;
+using MovieVault.Api.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog((context, services, configuration) =>
+    configuration.ReadFrom.Configuration(context.Configuration));
 
 builder.Services.AddDbContext<MovieVaultContext>(options =>
 
@@ -14,6 +19,7 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
+app.UseMiddleware<RequestLoggingMiddleware>();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
