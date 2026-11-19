@@ -25,6 +25,8 @@ public class MovieVaultContext : IdentityDbContext<ApiUser>
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+
+        base.OnModelCreating(modelBuilder);   
         // ---------- 1:N ----------
 
         // ProductionCompany 1 -> N Studio
