@@ -4,6 +4,9 @@ using MovieVault.Api.Data;
 using MovieVault.Api.Dtos;
 using MovieVault.Api.Entities;
 using Microsoft.AspNetCore.Identity;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using Microsoft.IdentityModel.Tokens;
 
 namespace MovieVault.Api.Controllers;
 
@@ -63,6 +66,46 @@ public async Task<ActionResult> Register(RegisterDTO input)
     catch (Exception e)
     {
         return StatusCode(500, new ProblemDetails { Detail = e.Message, Status = 500 });
+    }
+}
+
+
+public async Task<ActionResult> Login(LoginDTO input)
+{
+    try
+    {
+        if (ModelState.IsValid)
+        {
+            var user = await _userManager.FindByNameAsync(input.UserName);
+            if (user == null || !await _userManager.CheckPasswordAsync(user, input.Password))
+                throw new Exception("Invalid login attempt.");
+            else
+            {
+                var signingCredentials = new SigningCredentials(
+                    new SymmetricSecurityKey(
+                    System.Text.Encoding.UTF8.GetBytes(_configuration["JWT:SigningKey"])),
+                    SecurityAlgorithms.HmacSha256);
+                var claims = new List<Claim>();
+                claims.Add(new Claim(ClaimTypes.Name, user.UserName));
+                var jwtObject = new JwtSecurityToken(
+                    issuer: _configuration["JWT:Issuer"],
+                    audience: _configuration["JWT:Audience"],
+                    claims: claims,
+                    expires: DateTime.Now.AddSeconds(300),
+                    signingCredentials: signingCredentials);
+                var jwtString = new JwtSecurityTokenHandler()
+                .WriteToken(jwtObject);
+                return StatusCode(StatusCodes.Status200OK, jwtString);
+            }       }
+                else
+        {
+            return BadRequest(new ValidationProblemDetails(ModelState));   // 400
+        }
+    }
+    catch (Exception e)
+    {
+        return StatusCode(StatusCodes.Status401Unauthorized,
+            new ProblemDetails { Detail = e.Message, Status = 401 });
     }
 }
 
