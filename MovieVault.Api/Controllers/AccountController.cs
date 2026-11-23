@@ -11,7 +11,7 @@ using Microsoft.IdentityModel.Tokens;
 namespace MovieVault.Api.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/auth")]
 
 public class AccountController : ControllerBase
 {
@@ -35,6 +35,7 @@ public AccountController(
     }
 
 
+[HttpPost("register")]
 public async Task<ActionResult> Register(RegisterDTO input)
 {
     try
@@ -70,6 +71,7 @@ public async Task<ActionResult> Register(RegisterDTO input)
 }
 
 
+[HttpPost("login")]
 public async Task<ActionResult> Login(LoginDTO input)
 {
     try
@@ -108,5 +110,6 @@ public async Task<ActionResult> Login(LoginDTO input)
             new ProblemDetails { Detail = e.Message, Status = 401 });
     }
 }
+
 
 }
