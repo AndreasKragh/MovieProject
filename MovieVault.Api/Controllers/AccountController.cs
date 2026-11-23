@@ -27,11 +27,11 @@ public AccountController(
         UserManager<ApiUser> userManager,
         SignInManager<ApiUser> signInManager)
     {
-    _context = context;
-    _logger = logger;
-    _configuration = configuration;
-    _userManager = userManager;
-    _signInManager = signInManager;
+        _context = context;
+        _logger = logger;
+        _configuration = configuration;
+        _userManager = userManager;
+        _signInManager = signInManager;
     }
 
 
