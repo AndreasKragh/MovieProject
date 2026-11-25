@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Authorization;
+using MovieVault.Api.Constants;
 using System.Linq.Expressions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -7,6 +9,7 @@ using MovieVault.Api.Entities;
 
 namespace MovieVault.Api.Controllers;
 
+[Authorize] // alle endpoints kræver et gyldigt token (slide 35)
 [ApiController]
 [Route("api/[controller]")]
 public partial class ScreeningsController : ControllerBase
@@ -48,6 +51,7 @@ public partial class ScreeningsController : ControllerBase
     }
 
     // POST /api/screenings  -> opret screening for en film og knyt den til en sal
+    [Authorize(Policy = Policies.AdminOnly)]
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -89,6 +93,7 @@ public partial class ScreeningsController : ControllerBase
     }
 
     // PUT /api/screenings/5  -> opdater screening
+    [Authorize(Policy = Policies.AdminOnly)]
     [HttpPut("{id:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -143,6 +148,7 @@ public partial class ScreeningsController : ControllerBase
     }
 
     // DELETE /api/screenings/5  -> annuller screening
+    [Authorize(Policy = Policies.AdminOnly)]
     [HttpDelete("{id:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

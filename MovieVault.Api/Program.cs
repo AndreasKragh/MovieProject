@@ -9,6 +9,8 @@ using MovieVault.Api.Entities;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using MovieVault.Api.Constants;
+using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -55,6 +57,22 @@ builder.Services.AddAuthentication(options => {
 });
 
 
+//AUTHORIZATION
+// Claims-based policies (slide 50-52): hver policy kræver et role-claim med bestemte værdier.
+// Role-claimet kommer fra tokenet, som AccountController.Login har lagt det i.
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(Policies.AdminOnly, policy => policy
+        .RequireClaim(ClaimTypes.Role, RoleNames.Admin));
+
+    options.AddPolicy(Policies.ActorDirectorOrAdmin, policy => policy
+        .RequireClaim(ClaimTypes.Role, RoleNames.Actor, RoleNames.Director, RoleNames.Admin));
+
+    options.AddPolicy(Policies.ActorOrAdmin, policy => policy
+        .RequireClaim(ClaimTypes.Role, RoleNames.Actor, RoleNames.Admin));
+});
+
+
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi(options =>
@@ -92,5 +110,19 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+
+
+
+
+
+// Seed roller og demo-brugere (slide 39)
+using (var scope = app.Services.CreateScope())
+{
+    var serviceProvider = scope.ServiceProvider;
+    var userManager = serviceProvider.GetRequiredService<UserManager<ApiUser>>();
+    var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    await UserSeeder.SeedUsersAsync(userManager, roleManager, app.Configuration);
+}
 
 app.Run();

@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Authorization;
+using MovieVault.Api.Constants;
 using System.Linq.Expressions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -9,6 +11,7 @@ namespace MovieVault.Api.Controllers;
 
 // Kun læsning: opgaven kræver ikke CRUD for biografer og sale,
 // men vi skal kunne hente screenings for en biograf.
+[Authorize] // alle endpoints kræver et gyldigt token (slide 35)
 [ApiController]
 [Route("api/[controller]")]
 public class CinemasController : ControllerBase

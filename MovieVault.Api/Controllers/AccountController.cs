@@ -89,6 +89,10 @@ public async Task<ActionResult> Login(LoginDTO input)
                     SecurityAlgorithms.HmacSha256);
                 var claims = new List<Claim>();
                 claims.Add(new Claim(ClaimTypes.Name, user.UserName));
+                // Læg brugerens roller i tokenet som role-claims (slide 46), så vores policies kan tjekke dem
+                claims.AddRange(
+                    (await _userManager.GetRolesAsync(user))
+                        .Select(r => new Claim(ClaimTypes.Role, r)));
                 var jwtObject = new JwtSecurityToken(
                     issuer: _configuration["JWT:Issuer"],
                     audience: _configuration["JWT:Audience"],

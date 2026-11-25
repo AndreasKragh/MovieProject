@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Authorization;
+using MovieVault.Api.Constants;
 using System.Linq.Expressions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -7,6 +9,7 @@ using MovieVault.Api.Entities;
 
 namespace MovieVault.Api.Controllers;
 
+[Authorize] // alle endpoints kræver et gyldigt token (slide 35)
 [ApiController]
 [Route("api/[controller]")]
 public class TicketSalesController : ControllerBase
@@ -73,6 +76,7 @@ public class TicketSalesController : ControllerBase
     // ------------------------------------------------------------------
     // POST /api/ticketsales  -> registrer et billetsalg
     // ------------------------------------------------------------------
+    [Authorize(Policy = Policies.AdminOnly)]
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -122,6 +126,7 @@ public class TicketSalesController : ControllerBase
     // ------------------------------------------------------------------
     // PUT /api/ticketsales/3  -> ret antallet
     // ------------------------------------------------------------------
+    [Authorize(Policy = Policies.AdminOnly)]
     [HttpPut("{id:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -149,6 +154,7 @@ public class TicketSalesController : ControllerBase
     // ------------------------------------------------------------------
     // DELETE /api/ticketsales/3
     // ------------------------------------------------------------------
+    [Authorize(Policy = Policies.AdminOnly)]
     [HttpDelete("{id:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

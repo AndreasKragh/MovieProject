@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Authorization;
+using MovieVault.Api.Constants;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MovieVault.Api.Dtos;
@@ -32,6 +34,7 @@ public partial class MoviesController
     }
 
     // POST /api/movies/6/cast  { "actorId": 4, "characterName": "...", "roleType": "lead" }
+    [Authorize(Policy = Policies.AdminOnly)]
     [HttpPost("{movieId:int}/cast")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -73,6 +76,7 @@ public partial class MoviesController
     }
 
     // DELETE /api/movies/6/cast/4
+    [Authorize(Policy = Policies.AdminOnly)]
     [HttpDelete("{movieId:int}/cast/{actorId:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -118,6 +122,7 @@ public partial class MoviesController
     }
 
     // POST /api/movies/6/locations  { "locationId": 5, "numberOfShootingDays": 3 }
+    [Authorize(Policy = Policies.AdminOnly)]
     [HttpPost("{movieId:int}/locations")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -160,6 +165,7 @@ public partial class MoviesController
     }
 
     // DELETE /api/movies/6/locations/5
+    [Authorize(Policy = Policies.AdminOnly)]
     [HttpDelete("{movieId:int}/locations/{locationId:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

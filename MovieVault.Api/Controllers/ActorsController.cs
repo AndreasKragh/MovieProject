@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Authorization;
+using MovieVault.Api.Constants;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MovieVault.Api.Data;
@@ -7,6 +9,7 @@ namespace MovieVault.Api.Controllers;
 
 // Skuespillere: kun læsning. Opgaven kræver ikke CRUD, men vi har brug for opslag
 // (til at finde ActorId) og for query-endpoint 5.
+[Authorize] // alle endpoints kræver et gyldigt token (slide 35)
 [ApiController]
 [Route("api/[controller]")]
 public class ActorsController : ControllerBase
@@ -33,6 +36,7 @@ public class ActorsController : ControllerBase
 
     // GET /api/actors/2/movie-performance   (query-endpoint 5)
     // De film skuespilleren medvirker i, og billetsalget for hver af dem + totaler.
+    [Authorize(Policy = Policies.ActorOrAdmin)]
     [HttpGet("{actorId:int}/movie-performance")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ActorMoviePerformanceDto>> GetMoviePerformance(int actorId)

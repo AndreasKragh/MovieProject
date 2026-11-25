@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Authorization;
+using MovieVault.Api.Constants;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MovieVault.Api.Dtos;
@@ -10,6 +12,7 @@ public partial class MoviesController
     // GET /api/movies/ticket-sales
     // Pr. film: samlet antal solgte billetter og samlet omsætning.
     // Film uden screenings eller salg kommer med og får 0.
+    [Authorize(Policy = Policies.ActorDirectorOrAdmin)]
     [HttpGet("ticket-sales")]
     public async Task<ActionResult<IEnumerable<MovieTicketSalesDto>>> GetTicketSalesByMovie()
     {
