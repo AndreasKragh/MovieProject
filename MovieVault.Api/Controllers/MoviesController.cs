@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using MovieVault.Api.Constants;
+using MovieVault.Api.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MovieVault.Api.Data;
@@ -14,10 +15,12 @@ namespace MovieVault.Api.Controllers;
 public partial class MoviesController : ControllerBase
 {
     private readonly MovieVaultContext _context;
+    private readonly IAuthorizationService _authorizationService;
 
-    public MoviesController(MovieVaultContext context)
+    public MoviesController(MovieVaultContext context, IAuthorizationService authorizationService)
     {
         _context = context;
+        _authorizationService = authorizationService;   // til resource-based authorization (slide 60)
     }
 
     // ------------------------------------------------------------------
@@ -26,8 +29,14 @@ public partial class MoviesController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<MovieOverviewDto>>> GetMovies()
     {
-        var movies = await _context.Movies
-            .AsNoTracking()
+        IQueryable<Movie> query = _context.Movies.AsNoTracking();
+
+        // Actor/Director ser kun egne film; Admin og Reviewer ser alle.
+        // Ingen egne film -> 200 med tom liste.
+        if (!User.CanSeeAllMovies())
+            query = query.OwnedBy(User.GetUserId());
+
+        var movies = await query
             .OrderBy(m => m.Title)
             .Select(m => new MovieOverviewDto(
                 m.MovieId,
@@ -47,8 +56,12 @@ public partial class MoviesController : ControllerBase
     // ------------------------------------------------------------------
     [HttpGet("{id:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<MovieDetailsDto>> GetMovie(int id)
     {
+        var denied = await CheckMovieAccessAsync(id);   // 404 eller 403
+        if (denied != null) return denied;
+
         var details = await GetDetailsAsync(id);
         if (details == null) return MovieNotFound(id);
 
@@ -213,6 +226,20 @@ public partial class MoviesController : ControllerBase
 
     private ActionResult MovieNotFound(int id) =>
         Problem(detail: $"Movie with id {id} was not found.", statusCode: StatusCodes.Status404NotFound);
+
+    // Resource-based authorization (slide 60): hent filmen, og spørg derefter
+    // IAuthorizationService om brugeren må se netop denne film (MovieAccessHandler).
+    // Returnerer null hvis adgang er OK, ellers 404 (findes ikke) eller 403 (ikke din film).
+    private async Task<ActionResult?> CheckMovieAccessAsync(int movieId)
+    {
+        var movie = await _context.Movies.AsNoTracking().FirstOrDefaultAsync(m => m.MovieId == movieId);
+        if (movie == null) return MovieNotFound(movieId);
+
+        var authResult = await _authorizationService.AuthorizeAsync(User, movie, Policies.CanViewMovie);
+        if (!authResult.Succeeded) return Forbid();   // ForbidResult -> 403 (slide 49)
+
+        return null;
+    }
 
     private async Task<MovieDetailsDto?> GetDetailsAsync(int id)
     {

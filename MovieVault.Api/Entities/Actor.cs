@@ -18,4 +18,9 @@ public class Actor
     public string Gender { get; set; } = string.Empty;
 
     public ICollection<MovieCast> MovieCasts { get; set; } = new List<MovieCast>();
+
+    // Kobling til Identity-brugeren (AspNetUsers.Id), så serveren kan finde
+    // "mine film" ud fra tokenet. Nullable: ikke alle skuespillere har et login.
+    public string? ApiUserId { get; set; }
+    public ApiUser? ApiUser { get; set; }
 }

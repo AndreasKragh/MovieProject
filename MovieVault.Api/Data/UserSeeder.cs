@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using MovieVault.Api.Constants;
+using Microsoft.EntityFrameworkCore;
 using MovieVault.Api.Entities;
 
 namespace MovieVault.Api.Data;
@@ -11,6 +12,7 @@ public static class UserSeeder
     public static async Task SeedUsersAsync(
         UserManager<ApiUser> userManager,
         RoleManager<IdentityRole> roleManager,
+        MovieVaultContext context,
         IConfiguration configuration)
     {
         // 1) Opret de fire roller, hvis de ikke findes
@@ -25,8 +27,8 @@ public static class UserSeeder
             ?? throw new InvalidOperationException("SeedUsers:DemoPassword mangler i konfigurationen.");
 
         await CreateUserAsync(userManager, "admin@movievault.dk",     "Demo Admin",     demoPassword, RoleNames.Admin);
-        await CreateUserAsync(userManager, "actor@movievault.dk",     "Demo Actor",     demoPassword, RoleNames.Actor);
-        await CreateUserAsync(userManager, "director@movievault.dk",  "Demo Director",  demoPassword, RoleNames.Director);
+        var actorUser    = await CreateUserAsync(userManager, "actor@movievault.dk",    "Demo Actor",    demoPassword, RoleNames.Actor);
+        var directorUser = await CreateUserAsync(userManager, "director@movievault.dk", "Demo Director", demoPassword, RoleNames.Director);
         await CreateUserAsync(userManager, "reviewer1@movievault.dk", "Demo Reviewer 1", demoPassword, RoleNames.Reviewer);
         await CreateUserAsync(userManager, "reviewer2@movievault.dk", "Demo Reviewer 2", demoPassword, RoleNames.Reviewer);
 
@@ -38,9 +40,35 @@ public static class UserSeeder
             ?? throw new InvalidOperationException("ServiceAccount:Password mangler i konfigurationen.");
 
         await CreateUserAsync(userManager, serviceUserName, "Ticket Sale Simulator", servicePassword, RoleNames.Admin);
+
+        // 4) Kobl demo-Actor og demo-Director til personer i SeedData, så "own movies" kan vises:
+        //    Actor 1 (Jonas Beck) medvirker i film 1, 2 og 6.
+        //    Director 1 (Anna Kristensen) har instrueret film 1 og 4.
+        await LinkActorAsync(context, actorId: 1, actorUser.Id);
+        await LinkDirectorAsync(context, directorId: 1, directorUser.Id);
     }
 
-    private static async Task CreateUserAsync(
+    private static async Task LinkActorAsync(MovieVaultContext context, int actorId, string userId)
+    {
+        var actor = await context.Actors.FirstOrDefaultAsync(a => a.ActorId == actorId);
+        if (actor != null && actor.ApiUserId == null)
+        {
+            actor.ApiUserId = userId;
+            await context.SaveChangesAsync();
+        }
+    }
+
+    private static async Task LinkDirectorAsync(MovieVaultContext context, int directorId, string userId)
+    {
+        var director = await context.Directors.FirstOrDefaultAsync(d => d.DirectorId == directorId);
+        if (director != null && director.ApiUserId == null)
+        {
+            director.ApiUserId = userId;
+            await context.SaveChangesAsync();
+        }
+    }
+
+    private static async Task<ApiUser> CreateUserAsync(
         UserManager<ApiUser> userManager,
         string email,
         string fullName,
@@ -69,5 +97,7 @@ public static class UserSeeder
 
         if (!await userManager.IsInRoleAsync(user, role))
             await userManager.AddToRoleAsync(user, role);
+
+        return user;
     }
 }

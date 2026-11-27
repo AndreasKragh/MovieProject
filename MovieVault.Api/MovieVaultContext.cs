@@ -26,7 +26,23 @@ public class MovieVaultContext : IdentityDbContext<ApiUser>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
 
-        base.OnModelCreating(modelBuilder);   
+        base.OnModelCreating(modelBuilder);
+
+        // ---------- Identity-kobling (Assignment 4) ----------
+        // Actor/Director 0..1 -> 0..1 ApiUser. Unikt indeks: én bruger kan højst være
+        // én skuespiller og én instruktør. Sletter man brugeren, nulstilles koblingen.
+        modelBuilder.Entity<Actor>()
+            .HasOne(a => a.ApiUser)
+            .WithOne()
+            .HasForeignKey<Actor>(a => a.ApiUserId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<Director>()
+            .HasOne(d => d.ApiUser)
+            .WithOne()
+            .HasForeignKey<Director>(d => d.ApiUserId)
+            .OnDelete(DeleteBehavior.SetNull);
+
         // ---------- 1:N ----------
 
         // ProductionCompany 1 -> N Studio

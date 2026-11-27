@@ -20,8 +20,8 @@ public partial class MoviesController
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IEnumerable<CastMemberDto>>> GetCast(int movieId)
     {
-        if (!await _context.Movies.AnyAsync(m => m.MovieId == movieId))
-            return MovieNotFound(movieId);
+        var denied = await CheckMovieAccessAsync(movieId);   // 404 eller 403 (samme regler som movie details)
+        if (denied != null) return denied;
 
         var cast = await _context.MovieCasts
             .AsNoTracking()
@@ -106,8 +106,8 @@ public partial class MoviesController
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IEnumerable<FilmingLocationDto>>> GetFilmingLocations(int movieId)
     {
-        if (!await _context.Movies.AnyAsync(m => m.MovieId == movieId))
-            return MovieNotFound(movieId);
+        var denied = await CheckMovieAccessAsync(movieId);   // 404 eller 403 (samme regler som movie details)
+        if (denied != null) return denied;
 
         var locations = await _context.FilmedAt
             .AsNoTracking()
@@ -194,8 +194,8 @@ public partial class MoviesController
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IEnumerable<ScreeningDto>>> GetMovieScreenings(int movieId)
     {
-        if (!await _context.Movies.AnyAsync(m => m.MovieId == movieId))
-            return MovieNotFound(movieId);
+        var denied = await CheckMovieAccessAsync(movieId);   // 404 eller 403 (samme regler som movie details)
+        if (denied != null) return denied;
 
         var screenings = await _context.Screenings
             .AsNoTracking()

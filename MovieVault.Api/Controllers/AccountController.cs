@@ -89,6 +89,8 @@ public async Task<ActionResult> Login(LoginDTO input)
                     SecurityAlgorithms.HmacSha256);
                 var claims = new List<Claim>();
                 claims.Add(new Claim(ClaimTypes.Name, user.UserName));
+                // Brugerens Id, så serveren kan finde den tilknyttede Actor/Director ("own movies")
+                claims.Add(new Claim(ClaimTypes.NameIdentifier, user.Id));
                 // Læg brugerens roller i tokenet som role-claims (slide 46), så vores policies kan tjekke dem
                 claims.AddRange(
                     (await _userManager.GetRolesAsync(user))

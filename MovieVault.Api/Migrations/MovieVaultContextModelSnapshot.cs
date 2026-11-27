@@ -163,6 +163,9 @@ namespace MovieVault.Api.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ActorId"));
 
+                    b.Property<string>("ApiUserId")
+                        .HasColumnType("nvarchar(450)");
+
                     b.Property<DateOnly>("BirthDate")
                         .HasColumnType("date");
 
@@ -182,6 +185,10 @@ namespace MovieVault.Api.Migrations
                         .HasColumnType("nvarchar(50)");
 
                     b.HasKey("ActorId");
+
+                    b.HasIndex("ApiUserId")
+                        .IsUnique()
+                        .HasFilter("[ApiUserId] IS NOT NULL");
 
                     b.ToTable("Actors");
 
@@ -410,6 +417,9 @@ namespace MovieVault.Api.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("DirectorId"));
 
+                    b.Property<string>("ApiUserId")
+                        .HasColumnType("nvarchar(450)");
+
                     b.Property<DateOnly>("BirthDate")
                         .HasColumnType("date");
 
@@ -422,6 +432,10 @@ namespace MovieVault.Api.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("DirectorId");
+
+                    b.HasIndex("ApiUserId")
+                        .IsUnique()
+                        .HasFilter("[ApiUserId] IS NOT NULL");
 
                     b.ToTable("Directors");
 
@@ -1623,6 +1637,26 @@ namespace MovieVault.Api.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("MovieVault.Api.Entities.Actor", b =>
+                {
+                    b.HasOne("MovieVault.Api.Entities.ApiUser", "ApiUser")
+                        .WithOne()
+                        .HasForeignKey("MovieVault.Api.Entities.Actor", "ApiUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("ApiUser");
+                });
+
+            modelBuilder.Entity("MovieVault.Api.Entities.Director", b =>
+                {
+                    b.HasOne("MovieVault.Api.Entities.ApiUser", "ApiUser")
+                        .WithOne()
+                        .HasForeignKey("MovieVault.Api.Entities.Director", "ApiUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("ApiUser");
                 });
 
             modelBuilder.Entity("MovieVault.Api.Entities.FilmedAt", b =>

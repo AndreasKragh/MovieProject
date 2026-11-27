@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using MovieVault.Api.Constants;
+using MovieVault.Api.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MovieVault.Api.Dtos;
@@ -19,11 +20,20 @@ public partial class ScreeningsController
         var today = DateOnly.FromDateTime(now);
         var timeNow = TimeOnly.FromDateTime(now);
 
-        var screenings = await _context.Screenings
+        var query = _context.Screenings
             .AsNoTracking()
             // Filtrering: senere dato, eller i dag med en starttid, der ikke er passeret
             .Where(s => s.ScreeningDate > today ||
-                        (s.ScreeningDate == today && s.StartTime >= timeNow))
+                        (s.ScreeningDate == today && s.StartTime >= timeNow));
+
+        // Actor/Director: kun screenings af egne film. Admin og Reviewer: alle.
+        if (!User.CanSeeAllMovies())
+        {
+            var ownMovieIds = _context.Movies.OwnedBy(User.GetUserId()).Select(m => m.MovieId);
+            query = query.Where(s => ownMovieIds.Contains(s.MovieId));   // bliver til en subquery i SQL
+        }
+
+        var screenings = await query
             .OrderBy(s => s.ScreeningDate).ThenBy(s => s.StartTime)
             // JOINs: Screening -> Movie, Screen -> Cinema
             .Select(s => new UpcomingScreeningDto(

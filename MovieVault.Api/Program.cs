@@ -11,6 +11,8 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using MovieVault.Api.Constants;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
+using MovieVault.Api.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -70,7 +72,18 @@ builder.Services.AddAuthorization(options =>
 
     options.AddPolicy(Policies.ActorOrAdmin, policy => policy
         .RequireClaim(ClaimTypes.Role, RoleNames.Actor, RoleNames.Admin));
+
+    // Resource-based policies (slide 62): består af et requirement, som en handler afgør
+    options.AddPolicy(Policies.CanViewMovie, policy => policy
+        .AddRequirements(new CanViewMovieRequirement()));
+
+    options.AddPolicy(Policies.CanViewActorPerformance, policy => policy
+        .AddRequirements(new CanViewActorPerformanceRequirement()));
 });
+
+// Handlerne registreres i DI (slide 59/64). Scoped, fordi MovieAccessHandler bruger DbContext.
+builder.Services.AddScoped<IAuthorizationHandler, MovieAccessHandler>();
+builder.Services.AddScoped<IAuthorizationHandler, ActorPerformanceHandler>();
 
 
 builder.Services.AddControllers();
@@ -90,6 +103,16 @@ builder.Services.AddOpenApi(options =>
             BearerFormat = "JWT",
             Scheme = "bearer"
         });
+
+        // Sig til OpenAPI/Scalar, at Bearer-skemaet skal BRUGES på requests.
+        // Uden dette er skemaet kun defineret, og Scalar sender ikke Authorization-headeren.
+        document.Security =
+        [
+            new OpenApiSecurityRequirement
+            {
+                [new OpenApiSecuritySchemeReference("Bearer", document)] = []
+            }
+        ];
         return Task.CompletedTask;
     });
 });
@@ -122,7 +145,8 @@ using (var scope = app.Services.CreateScope())
     var serviceProvider = scope.ServiceProvider;
     var userManager = serviceProvider.GetRequiredService<UserManager<ApiUser>>();
     var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-    await UserSeeder.SeedUsersAsync(userManager, roleManager, app.Configuration);
+    var context = serviceProvider.GetRequiredService<MovieVaultContext>();
+    await UserSeeder.SeedUsersAsync(userManager, roleManager, context, app.Configuration);
 }
 
 app.Run();

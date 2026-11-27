@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using MovieVault.Api.Constants;
+using MovieVault.Api.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MovieVault.Api.Dtos;
+using MovieVault.Api.Entities;
 
 namespace MovieVault.Api.Controllers;
 
@@ -16,8 +18,14 @@ public partial class MoviesController
     [HttpGet("ticket-sales")]
     public async Task<ActionResult<IEnumerable<MovieTicketSalesDto>>> GetTicketSalesByMovie()
     {
-        var result = await _context.Movies
-            .AsNoTracking()
+        IQueryable<Movie> query = _context.Movies.AsNoTracking();
+
+        // Policyen har allerede afvist Reviewer (403). Admin ser alle film,
+        // Actor/Director kun salg for egne film.
+        if (!User.IsAdmin())
+            query = query.OwnedBy(User.GetUserId());
+
+        var result = await query
             .OrderBy(m => m.Title)
             .Select(m => new MovieTicketSalesDto(
                 m.MovieId,

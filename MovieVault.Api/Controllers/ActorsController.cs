@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using MovieVault.Api.Constants;
+using MovieVault.Api.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MovieVault.Api.Data;
@@ -15,10 +16,12 @@ namespace MovieVault.Api.Controllers;
 public class ActorsController : ControllerBase
 {
     private readonly MovieVaultContext _context;
+    private readonly IAuthorizationService _authorizationService;
 
-    public ActorsController(MovieVaultContext context)
+    public ActorsController(MovieVaultContext context, IAuthorizationService authorizationService)
     {
         _context = context;
+        _authorizationService = authorizationService;   // til resource-based authorization (slide 60)
     }
 
     // GET /api/actors
@@ -51,6 +54,12 @@ public class ActorsController : ControllerBase
                 detail: $"Actor with id {actorId} was not found.",
                 statusCode: StatusCodes.Status404NotFound);
         }
+
+        // Policyen ActorOrAdmin har sorteret Director/Reviewer fra. Her tjekkes det,
+        // at en Actor kun ser sin EGEN performance (ActorPerformanceHandler).
+        var authResult = await _authorizationService.AuthorizeAsync(
+            User, actor, Policies.CanViewActorPerformance);
+        if (!authResult.Succeeded) return Forbid();   // 403
 
         // Filtrering på MovieCast (join-tabellen), derefter JOIN til Movie og SUM af billetsalg
         var movies = await _context.MovieCasts

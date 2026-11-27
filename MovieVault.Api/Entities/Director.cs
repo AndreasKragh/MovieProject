@@ -9,4 +9,9 @@ public class Director
     public string Nationality { get; set; } = "";
 
     public ICollection<Movie> Movies { get; set; } = new List<Movie>();   // "mange"-siden
+
+    // Kobling til Identity-brugeren (AspNetUsers.Id), så serveren kan finde
+    // "mine film" ud fra tokenet. Nullable: ikke alle instruktører har et login.
+    public string? ApiUserId { get; set; }
+    public ApiUser? ApiUser { get; set; }
 }

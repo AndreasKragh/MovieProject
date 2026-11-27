@@ -12,4 +12,9 @@ public static class Policies
 
     // "Actor movie performance": kun Actor og Admin
     public const string ActorOrAdmin = "ActorOrAdmin";
+
+    // Resource-based (slide 60-64): tjekkes i controlleren med IAuthorizationService,
+    // fordi vi først skal hente filmen/skuespilleren, før vi kan afgøre adgangen.
+    public const string CanViewMovie = "CanViewMovie";
+    public const string CanViewActorPerformance = "CanViewActorPerformance";
 }
