@@ -73,6 +73,9 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy(Policies.ActorOrAdmin, policy => policy
         .RequireClaim(ClaimTypes.Role, RoleNames.Actor, RoleNames.Admin));
 
+    options.AddPolicy(Policies.ReviewerOrAdmin, policy => policy
+        .RequireClaim(ClaimTypes.Role, RoleNames.Reviewer, RoleNames.Admin));
+
 
     // Resource-based policies (slide 62): består af et requirement, som en handler afgør
     options.AddPolicy(Policies.CanViewMovie, policy => policy
@@ -80,11 +83,15 @@ builder.Services.AddAuthorization(options =>
 
     options.AddPolicy(Policies.CanViewActorPerformance, policy => policy
         .AddRequirements(new CanViewActorPerformanceRequirement()));
+
+    options.AddPolicy(Policies.CanManageReview, policy => policy
+        .AddRequirements(new CanManageReviewRequirement()));
 });
 
 // Handlerne registreres i DI (slide 59/64). Scoped, fordi MovieAccessHandler bruger DbContext.
 builder.Services.AddScoped<IAuthorizationHandler, MovieAccessHandler>();
 builder.Services.AddScoped<IAuthorizationHandler, ActorPerformanceHandler>();
+builder.Services.AddScoped<IAuthorizationHandler, ReviewOwnerHandler>();
 
 
 builder.Services.AddControllers();

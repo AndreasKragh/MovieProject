@@ -20,4 +20,5 @@ public class Movie
     public ICollection<MovieCast> Cast { get; set; } = new List<MovieCast>(); // N:M
     public ICollection<FilmedAt> FilmingLocations { get; set; } = new List<FilmedAt>(); // N:M
     public ICollection<Screening> Screenings { get; set; } = new List<Screening>(); // 1:N
+    public ICollection<Review> Reviews { get; set; } = new List<Review>(); // 1:N (0..N anmeldelser)
 }

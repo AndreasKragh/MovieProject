@@ -186,5 +186,14 @@ public static class SeedData
             new TicketSale { TicketSaleId = 18, ScreeningId = 11, SaleDateTime = new DateTime(2026, 10, 27, 12, 20, 0), Quantity = 6, TotalPrice = 690m },
             new TicketSale { TicketSaleId = 19, ScreeningId = 12, SaleDateTime = new DateTime(2026, 10, 26, 19, 0, 0), Quantity = 2, TotalPrice = 250m }
         );
+
+        // ---------- Media outlets (3) ----------
+        // Anmelderprofiler og anmeldelser seedes i UserSeeder, fordi de kræver Identity-brugere,
+        // som først oprettes ved opstart. Medie 3 har endnu ingen anmeldere.
+        modelBuilder.Entity<MediaOutlet>().HasData(
+            new MediaOutlet { MediaOutletId = 1, Name = "Morgenposten", OutletType = "newspaper", Website = "https://www.morgenposten.example" },
+            new MediaOutlet { MediaOutletId = 2, Name = "Kanal Nord", OutletType = "tv", Website = "https://www.kanalnord.example" },
+            new MediaOutlet { MediaOutletId = 3, Name = "CineZine", OutletType = "online", Website = "https://www.cinezine.example" }
+        );
     }
 }

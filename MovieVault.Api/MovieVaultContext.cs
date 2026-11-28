@@ -22,6 +22,9 @@ public class MovieVaultContext : IdentityDbContext<ApiUser>
     public DbSet<Screen> Screens { get; set; }
     public DbSet<Screening> Screenings { get; set; }
     public DbSet<TicketSale> TicketSales { get; set; }
+    public DbSet<MediaOutlet> MediaOutlets { get; set; }
+    public DbSet<Reviewer> Reviewers { get; set; }
+    public DbSet<Review> Reviews { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -42,6 +45,47 @@ public class MovieVaultContext : IdentityDbContext<ApiUser>
             .WithOne()
             .HasForeignKey<Director>(d => d.ApiUserId)
             .OnDelete(DeleteBehavior.SetNull);
+
+        // Reviewer 1 -> 1 ApiUser (påkrævet, unik). Restrict: en bruger med anmeldelser kan ikke slettes uden videre.
+        modelBuilder.Entity<Reviewer>()
+            .HasOne(r => r.ApiUser)
+            .WithOne()
+            .HasForeignKey<Reviewer>(r => r.ApiUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // ---------- Reviews og media outlets (Assignment 4) ----------
+
+        // MediaOutlet 1 -> N Reviewer
+        modelBuilder.Entity<Reviewer>()
+            .HasOne(r => r.MediaOutlet)
+            .WithMany(o => o.Reviewers)
+            .HasForeignKey(r => r.MediaOutletId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Movie 1 -> N Review (en film kan eksistere uden anmeldelser)
+        modelBuilder.Entity<Review>()
+            .HasOne(r => r.Movie)
+            .WithMany(m => m.Reviews)
+            .HasForeignKey(r => r.MovieId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Reviewer 1 -> N Review
+        modelBuilder.Entity<Review>()
+            .HasOne(r => r.Reviewer)
+            .WithMany(rv => rv.Reviews)
+            .HasForeignKey(r => r.ReviewerId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // MediaOutlet 1 -> N Review
+        modelBuilder.Entity<Review>()
+            .HasOne(r => r.MediaOutlet)
+            .WithMany(o => o.Reviews)
+            .HasForeignKey(r => r.MediaOutletId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<MediaOutlet>()
+            .HasIndex(o => o.Name)
+            .IsUnique();
 
         // ---------- 1:N ----------
 
@@ -172,6 +216,13 @@ public class MovieVaultContext : IdentityDbContext<ApiUser>
             t.HasCheckConstraint("CK_TicketSale_Quantity", "[Quantity] > 0");
             t.HasCheckConstraint("CK_TicketSale_TotalPrice", "[TotalPrice] >= 0");
         });
+
+        modelBuilder.Entity<Review>().ToTable(t => t.HasCheckConstraint(
+            "CK_Review_Rating", "[Rating] BETWEEN 1 AND 5"));
+
+        modelBuilder.Entity<MediaOutlet>().ToTable(t => t.HasCheckConstraint(
+            "CK_MediaOutlet_OutletType",
+            "[OutletType] IN ('newspaper', 'tv', 'radio', 'magazine', 'online')"));
         modelBuilder.Seed();
     }
 }

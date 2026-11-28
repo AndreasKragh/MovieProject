@@ -189,6 +189,14 @@ public partial class MoviesController : ControllerBase
                 statusCode: StatusCodes.Status409Conflict);
         }
 
+        // Anmeldelser har også Restrict: anmelderes arbejde skal ikke forsvinde stille med filmen
+        if (await _context.Reviews.AnyAsync(r => r.MovieId == id))
+        {
+            return Problem(
+                detail: "The movie cannot be deleted because it has reviews. Delete the reviews first.",
+                statusCode: StatusCodes.Status409Conflict);
+        }
+
         // Cast, FilmedAt og ProductionRecord slettes automatisk (Cascade i DbContext)
         _context.Movies.Remove(movie);
         await _context.SaveChangesAsync();

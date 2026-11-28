@@ -648,6 +648,62 @@ namespace MovieVault.Api.Migrations
                         });
                 });
 
+            modelBuilder.Entity("MovieVault.Api.Entities.MediaOutlet", b =>
+                {
+                    b.Property<int>("MediaOutletId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MediaOutletId"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("OutletType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Website")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasKey("MediaOutletId");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("MediaOutlets", t =>
+                        {
+                            t.HasCheckConstraint("CK_MediaOutlet_OutletType", "[OutletType] IN ('newspaper', 'tv', 'radio', 'magazine', 'online')");
+                        });
+
+                    b.HasData(
+                        new
+                        {
+                            MediaOutletId = 1,
+                            Name = "Morgenposten",
+                            OutletType = "newspaper",
+                            Website = "https://www.morgenposten.example"
+                        },
+                        new
+                        {
+                            MediaOutletId = 2,
+                            Name = "Kanal Nord",
+                            OutletType = "tv",
+                            Website = "https://www.kanalnord.example"
+                        },
+                        new
+                        {
+                            MediaOutletId = 3,
+                            Name = "CineZine",
+                            OutletType = "online",
+                            Website = "https://www.cinezine.example"
+                        });
+                });
+
             modelBuilder.Entity("MovieVault.Api.Entities.Movie", b =>
                 {
                     b.Property<int>("MovieId")
@@ -1062,6 +1118,78 @@ namespace MovieVault.Api.Migrations
                             ProductionEndDate = new DateOnly(2026, 11, 30),
                             ProductionStartDate = new DateOnly(2026, 3, 15)
                         });
+                });
+
+            modelBuilder.Entity("MovieVault.Api.Entities.Review", b =>
+                {
+                    b.Property<int>("ReviewId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ReviewId"));
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<string>("Headline")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("MediaOutletId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("MovieId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("PublishedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Rating")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ReviewerId")
+                        .HasColumnType("int");
+
+                    b.HasKey("ReviewId");
+
+                    b.HasIndex("MediaOutletId");
+
+                    b.HasIndex("MovieId");
+
+                    b.HasIndex("ReviewerId");
+
+                    b.ToTable("Reviews", t =>
+                        {
+                            t.HasCheckConstraint("CK_Review_Rating", "[Rating] BETWEEN 1 AND 5");
+                        });
+                });
+
+            modelBuilder.Entity("MovieVault.Api.Entities.Reviewer", b =>
+                {
+                    b.Property<int>("ReviewerId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ReviewerId"));
+
+                    b.Property<string>("ApiUserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("MediaOutletId")
+                        .HasColumnType("int");
+
+                    b.HasKey("ReviewerId");
+
+                    b.HasIndex("ApiUserId")
+                        .IsUnique();
+
+                    b.HasIndex("MediaOutletId");
+
+                    b.ToTable("Reviewers");
                 });
 
             modelBuilder.Entity("MovieVault.Api.Entities.Screen", b =>
@@ -1726,6 +1854,52 @@ namespace MovieVault.Api.Migrations
                     b.Navigation("Movie");
                 });
 
+            modelBuilder.Entity("MovieVault.Api.Entities.Review", b =>
+                {
+                    b.HasOne("MovieVault.Api.Entities.MediaOutlet", "MediaOutlet")
+                        .WithMany("Reviews")
+                        .HasForeignKey("MediaOutletId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("MovieVault.Api.Entities.Movie", "Movie")
+                        .WithMany("Reviews")
+                        .HasForeignKey("MovieId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("MovieVault.Api.Entities.Reviewer", "Reviewer")
+                        .WithMany("Reviews")
+                        .HasForeignKey("ReviewerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("MediaOutlet");
+
+                    b.Navigation("Movie");
+
+                    b.Navigation("Reviewer");
+                });
+
+            modelBuilder.Entity("MovieVault.Api.Entities.Reviewer", b =>
+                {
+                    b.HasOne("MovieVault.Api.Entities.ApiUser", "ApiUser")
+                        .WithOne()
+                        .HasForeignKey("MovieVault.Api.Entities.Reviewer", "ApiUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("MovieVault.Api.Entities.MediaOutlet", "MediaOutlet")
+                        .WithMany("Reviewers")
+                        .HasForeignKey("MediaOutletId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ApiUser");
+
+                    b.Navigation("MediaOutlet");
+                });
+
             modelBuilder.Entity("MovieVault.Api.Entities.Screen", b =>
                 {
                     b.HasOne("MovieVault.Api.Entities.Cinema", "Cinema")
@@ -1798,6 +1972,13 @@ namespace MovieVault.Api.Migrations
                     b.Navigation("FilmedAt");
                 });
 
+            modelBuilder.Entity("MovieVault.Api.Entities.MediaOutlet", b =>
+                {
+                    b.Navigation("Reviewers");
+
+                    b.Navigation("Reviews");
+                });
+
             modelBuilder.Entity("MovieVault.Api.Entities.Movie", b =>
                 {
                     b.Navigation("Cast");
@@ -1805,6 +1986,8 @@ namespace MovieVault.Api.Migrations
                     b.Navigation("FilmingLocations");
 
                     b.Navigation("ProductionRecord");
+
+                    b.Navigation("Reviews");
 
                     b.Navigation("Screenings");
                 });
@@ -1814,6 +1997,11 @@ namespace MovieVault.Api.Migrations
                     b.Navigation("Movies");
 
                     b.Navigation("Studios");
+                });
+
+            modelBuilder.Entity("MovieVault.Api.Entities.Reviewer", b =>
+                {
+                    b.Navigation("Reviews");
                 });
 
             modelBuilder.Entity("MovieVault.Api.Entities.Screen", b =>
