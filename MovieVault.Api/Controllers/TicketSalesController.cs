@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using MovieVault.Api.Data;
 using MovieVault.Api.Dtos;
 using MovieVault.Api.Entities;
+using MovieVault.Api.Authorization;
 
 namespace MovieVault.Api.Controllers;
 
@@ -39,10 +40,19 @@ public class TicketSalesController : ControllerBase
     // ------------------------------------------------------------------
     // GET /api/ticketsales            (evt. ?screeningId=5)
     // ------------------------------------------------------------------
+    // Samme regler som "ticket sales by movie": Reviewer afvises af policyen (403),
+    // Actor/Director ser kun salg for egne film, Admin ser alt.
+    [Authorize(Policy = Policies.ActorDirectorOrAdmin)]
     [HttpGet]
     public async Task<ActionResult<IEnumerable<TicketSaleDto>>> GetTicketSales([FromQuery] int? screeningId)
     {
         var query = _context.TicketSales.AsNoTracking();
+
+        if (!User.IsAdmin())
+        {
+            var ownMovieIds = _context.Movies.OwnedBy(User.GetUserId()).Select(m => m.MovieId);
+            query = query.Where(t => ownMovieIds.Contains(t.Screening.MovieId));
+        }
 
         if (screeningId != null)
             query = query.Where(t => t.ScreeningId == screeningId);
@@ -58,10 +68,23 @@ public class TicketSalesController : ControllerBase
     // ------------------------------------------------------------------
     // GET /api/ticketsales/3
     // ------------------------------------------------------------------
+    [Authorize(Policy = Policies.ActorDirectorOrAdmin)]   // Reviewer: 403
     [HttpGet("{id:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<TicketSaleDto>> GetTicketSale(int id)
     {
+        // Find filmen bag salget: findes salget ikke -> 404, ikke din film -> 403
+        var movieId = await _context.TicketSales
+            .Where(t => t.TicketSaleId == id)
+            .Select(t => (int?)t.Screening.MovieId)
+            .FirstOrDefaultAsync();
+
+        if (movieId == null) return SaleNotFound(id);
+
+        if (!User.IsAdmin() &&
+            !await _context.Movies.OwnedBy(User.GetUserId()).AnyAsync(m => m.MovieId == movieId))
+            return Forbid();
+
         var sale = await _context.TicketSales
             .AsNoTracking()
             .Where(t => t.TicketSaleId == id)

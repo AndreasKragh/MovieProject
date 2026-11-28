@@ -73,6 +73,7 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy(Policies.ActorOrAdmin, policy => policy
         .RequireClaim(ClaimTypes.Role, RoleNames.Actor, RoleNames.Admin));
 
+
     // Resource-based policies (slide 62): består af et requirement, som en handler afgør
     options.AddPolicy(Policies.CanViewMovie, policy => policy
         .AddRequirements(new CanViewMovieRequirement()));

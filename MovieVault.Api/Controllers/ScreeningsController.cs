@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using MovieVault.Api.Data;
 using MovieVault.Api.Dtos;
 using MovieVault.Api.Entities;
+using MovieVault.Api.Authorization;
 
 namespace MovieVault.Api.Controllers;
 
@@ -15,18 +16,28 @@ namespace MovieVault.Api.Controllers;
 public partial class ScreeningsController : ControllerBase
 {
     private readonly MovieVaultContext _context;
+    private readonly IAuthorizationService _authorizationService;
 
-    public ScreeningsController(MovieVaultContext context)
+    public ScreeningsController(MovieVaultContext context, IAuthorizationService authorizationService)
     {
         _context = context;
+        _authorizationService = authorizationService;   // resource-based tjek af screeningens film
     }
 
     // GET /api/screenings
+    // Actor/Director: kun screenings af egne film. Admin og Reviewer: alle.
     [HttpGet]
     public async Task<ActionResult<IEnumerable<ScreeningDto>>> GetScreenings()
     {
-        var screenings = await _context.Screenings
-            .AsNoTracking()
+        var query = _context.Screenings.AsNoTracking();
+
+        if (!User.CanSeeAllMovies())
+        {
+            var ownMovieIds = _context.Movies.OwnedBy(User.GetUserId()).Select(m => m.MovieId);
+            query = query.Where(s => ownMovieIds.Contains(s.MovieId));   // subquery i SQL
+        }
+
+        var screenings = await query
             .OrderBy(s => s.ScreeningDate).ThenBy(s => s.StartTime)
             .Select(ScreeningProjections.ToDto)
             .ToListAsync();
@@ -46,6 +57,11 @@ public partial class ScreeningsController : ControllerBase
             .FirstOrDefaultAsync();
 
         if (screening == null) return ScreeningNotFound(id);
+
+        // Samme regler som movie details: tjek screeningens film med MovieAccessHandler
+        var movie = await _context.Movies.AsNoTracking().FirstAsync(m => m.MovieId == screening.MovieId);
+        var authResult = await _authorizationService.AuthorizeAsync(User, movie, Policies.CanViewMovie);
+        if (!authResult.Succeeded) return Forbid();   // 403: screening af en film, man ikke har adgang til
 
         return Ok(screening);
     }

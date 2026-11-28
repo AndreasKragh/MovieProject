@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using MovieVault.Api.Data;
 using MovieVault.Api.Dtos;
 using MovieVault.Api.Entities;
+using MovieVault.Api.Authorization;
 
 namespace MovieVault.Api.Controllers;
 
@@ -71,9 +72,18 @@ public class CinemasController : ControllerBase
         if (!await _context.Cinemas.AnyAsync(c => c.CinemaId == cinemaId))
             return CinemaNotFound(cinemaId);
 
-        var screenings = await _context.Screenings
+        var query = _context.Screenings
             .AsNoTracking()
-            .Where(s => s.Screen.CinemaId == cinemaId)
+            .Where(s => s.Screen.CinemaId == cinemaId);
+
+        // Actor/Director: kun screenings af egne film. Admin og Reviewer: alle.
+        if (!User.CanSeeAllMovies())
+        {
+            var ownMovieIds = _context.Movies.OwnedBy(User.GetUserId()).Select(m => m.MovieId);
+            query = query.Where(s => ownMovieIds.Contains(s.MovieId));
+        }
+
+        var screenings = await query
             .OrderBy(s => s.ScreeningDate).ThenBy(s => s.StartTime)
             .Select(ScreeningProjections.ToDto)
             .ToListAsync();
